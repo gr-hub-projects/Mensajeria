@@ -1,400 +1,429 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Data Quality — Interactivo</title>
-  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
-  <link rel="preconnect" href="https://fonts.gstatic.com"/>
-  <style>
-    :root{
-      --bg:#0f172a; --card:#111827; --muted:#94a3b8; --ink:#e5e7eb; --accent:#34d399;
-    }
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;}
-    .wrap{max-width:1280px;margin:24px auto;padding:0 16px;}
-    h1{margin:0 0 8px;}
-    .muted{color:var(--muted);font-size:14px}
-    .filters{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;margin:18px 0;padding:16px;background:#0b1220;border-radius:14px}
-    .filters > div{grid-column:span 3}
-    .filters label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-    .filters select,.filters input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #243042;background:#0e172a;color:#e5e7eb}
-    .btn{background:var(--accent);color:#062e2a;border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
-    .kpis{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin:14px 0}
-    .kpi{grid-column:span 3;background:var(--card);border-radius:12px;padding:16px}
-    .kpi .big{font-size:30px;font-weight:800}
-    .kpi .sub{color:var(--muted);margin-top:6px}
-    .cards{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin:16px 0}
-    .card{grid-column:span 6;background:var(--card);border-radius:14px;padding:14px}
-    .card-4{grid-column:span 3}
-    .hrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-    .table{background:var(--card);border-radius:14px;padding:12px;overflow:auto}
-    table{width:100%;border-collapse:collapse;font-size:14px}
-    th,td{border-bottom:1px solid #1f2937;padding:8px 10px;text-align:left}
-    th{color:#cbd5e1;font-weight:600}
-    .chip{display:inline-block;background:#0b1220;border:1px solid #203047;color:#93c5fd;border-radius:999px;padding:2px 10px;font-size:12px}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>DQ Dashboard (interactivo)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root{
+    --bg:#0b1220; --card:#111a2b; --muted:#9fb0c8; --accent:#5eead4; --border:#1f2a44;
+  }
+  body{font-family:Inter,system-ui,Arial,sans-serif; margin:0; color:white; background:linear-gradient(180deg,#0b1220 0%,#0b1426 100%)}
+  header{padding:22px 20px; border-bottom:1px solid var(--border); background:rgba(255,255,255,.02); position:sticky; top:0; backdrop-filter:blur(6px)}
+  h1{margin:0; font-size:22px}
+  .wrap{padding:20px}
+  .grid{display:grid; gap:16px}
+  .cols-3{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  .cols-4{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  label{font-size:12px; color:var(--muted)}
+  select,input{padding:8px; border:1px solid var(--border); background:#0f172a; color:white; border-radius:10px}
+  button{padding:10px 14px; border-radius:10px; border:0; background:var(--accent); color:#062225; font-weight:600}
+  small.muted{color:var(--muted)}
+  .kpi{display:flex; align-items:flex-start; gap:12px}
+  .kpi .num{font-size:26px; font-weight:800; line-height:1}
+  .kpi .lbl{color:var(--muted)}
+  .kpi .sub{color:var(--muted); font-size:12px; margin-top:4px}
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  th,td{border-bottom:1px solid var(--border); padding:8px 10px; text-align:left}
+  th{color:#dbeafe}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .right{text-align:right}
+  .pill{display:inline-block; padding:.15rem .5rem; border-radius:999px; font-size:12px; border:1px solid var(--border); color:var(--muted)}
+</style>
 </head>
 <body>
-<div class="wrap">
+<header>
   <h1>Data Quality — Interactivo</h1>
-  <p class="muted">JSON generados por <span class="chip">dq_build_local_report.py</span> en <code>site/data/</code></p>
+  <small class="muted">JSON generados por <code>dq_build_local_report.py</code> en <code>site/data/</code></small>
+</header>
 
-  <div class="filters">
-    <div>
-      <label>Agency</label>
-      <select id="fAgency"></select>
-    </div>
-    <div>
-      <label>Destination</label>
-      <select id="fDest"></select>
-    </div>
-    <div>
-      <label>Condactivación</label>
-      <select id="fCond"></select>
-    </div>
-    <div>
-      <label>Días hasta Check-in (min–max)</label>
-      <div style="display:flex;gap:6px">
-        <input id="fMin" type="number" step="1">
-        <input id="fMax" type="number" step="1">
+<div class="wrap">
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:end">
+      <div><label>Agency</label><br/><select id="agency"></select></div>
+      <div><label>Destination</label><br/><select id="destination"></select></div>
+      <div><label>Condactivación</label><br/><select id="cond"></select></div>
+      <div><label>Días hasta Check-in (min–max)</label><br/>
+        <input id="diasMin" type="number" style="width:110px"/> –
+        <input id="diasMax" type="number" style="width:110px"/>
       </div>
-    </div>
-    <div style="grid-column:span 3">
-      <label>Rango de fechas (histórico)</label>
-      <div style="display:flex;gap:6px">
-        <input id="fFrom" type="date">
-        <input id="fTo" type="date">
+      <div><label>Rango de fechas (histórico)</label><br/>
+        <input id="startDate" type="date"/> –
+        <input id="endDate" type="date"/>
       </div>
-    </div>
-    <div style="grid-column:span 2">
-      <label>Día de detalle</label>
-      <input id="fDay" type="date">
-    </div>
-    <div style="display:flex;align-items:flex-end">
-      <button class="btn" id="apply">Aplicar filtros</button>
-    </div>
-    <div style="grid-column:span 12">
-      <span class="muted">Rango disponible: <span id="rangeText"></span></span>
-    </div>
-  </div>
-
-  <!-- KPIs -->
-  <div class="kpis">
-    <div class="kpi"><div class="big" id="k_total">0</div><div class="sub">Registros (rango)</div></div>
-    <div class="kpi"><div class="big" id="k_with">0</div><div class="sub">Con email · <span id="k_with_pct">0%</span></div></div>
-    <div class="kpi">
-      <div class="big" id="k_valid">0</div>
-      <div class="sub">Formato válido · <span id="k_valid_pct">0%</span> de con email
-        <div class="muted" style="margin-top:4px;font-size:12px" id="k_invalid_break"></div>
+      <div><label>Día de detalle</label><br/>
+        <input id="detailDate" type="date"/>
       </div>
+      <button id="btn">Aplicar filtros</button>
     </div>
-    <div class="kpi"><div class="big" id="k_send">0</div><div class="sub">Enviables (suma diaria) · <span id="k_send_pct">0%</span> del total</div></div>
-    <div class="kpi"><div class="big" id="k_global_unique">0</div><div class="sub">Únicos enviables (rango)</div></div>
+    <div style="margin-top:8px"><small class="muted">Rango disponible: <b id="rng"></b></small></div>
   </div>
 
-  <h2>Histórico (según filtros)</h2>
-  <div class="cards">
+  <!-- KPIs del rango -->
+  <div class="grid cols-4" id="kpis-range"></div>
+
+  <h2 style="margin:18px 4px">Histórico (según filtros)</h2>
+  <div class="grid cols-3">
+    <div class="card"><div id="hist_line"></div></div>
+    <div class="card"><div id="hist_stack"></div></div>
     <div class="card">
-      <div class="hrow"><strong>Histórico: Total vs Enviables</strong></div>
-      <div id="c_hist_tvse"></div>
-    </div>
-    <div class="card">
-      <div class="hrow"><strong>Histórico: Razones DQ (stacked)</strong></div>
-      <div id="c_hist_reasons"></div>
-    </div>
-    <div class="card">
-      <div class="hrow"><strong>Top dominios (enviables, mensual)</strong></div>
-      <div id="c_hist_top_domains"></div>
-    </div>
-    <div class="card">
-      <div class="hrow"><strong>Resumen diario (tabla)</strong></div>
-      <div class="table"><table id="t_daily"></table></div>
+      <h3 style="margin:6px 0 10px">Resumen diario (tabla)</h3>
+      <div id="daily_table" style="max-height:420px; overflow:auto"></div>
     </div>
   </div>
 
-  <h2>Detalle del día <span class="chip" id="dayChip"></span></h2>
-  <div class="cards">
-    <div class="card">
-      <div class="hrow"><strong>Volumen del día (porcentajes)</strong></div>
-      <div id="c_day_bars"></div>
-    </div>
-    <div class="card">
-      <div class="hrow"><strong>Razones DQ del día</strong></div>
-      <div id="c_day_pie"></div>
-    </div>
-    <div class="card">
-      <div class="hrow"><strong>Top dominios (enviables, % del día)</strong></div>
-      <div id="c_day_domains"></div>
-    </div>
-    <div class="card">
-      <div class="hrow"><strong>Correos duplicados (día)</strong></div>
-      <div id="c_day_dup_emails"></div>
-    </div>
+  <!-- Top dominios duplicados (rango, %) -->
+  <div class="grid cols-3" style="margin-top:12px">
+    <div class="card"><div id="hist_top_dups"></div></div>
   </div>
 
-  <h3>Duplicados del día (según filtros)</h3>
-  <div class="table"><table id="t_dups"></table></div>
+  <h2 style="margin:18px 4px">Detalle del día <span class="pill" id="detailLabel"></span></h2>
+  <div class="grid cols-4" id="kpis-day"></div>
+
+  <!-- 4 gráficas: barras %, pie, top dominios enviables %, top emails duplicados (conteos sin etiquetas fijas) -->
+  <div class="grid cols-4" style="margin-top:12px">
+    <div class="card"><div id="y_bar"></div></div>
+    <div class="card"><div id="y_pie"></div></div>
+    <div class="card"><div id="y_domains"></div></div>
+    <div class="card"><div id="y_emails_dups"></div></div>
+  </div>
+
+  <!-- Tabla de duplicados del día (solo columnas requeridas) -->
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin:6px 0 10px">Duplicados del día (según filtros)</h3>
+    <div id="y_dups" style="max-height:420px; overflow:auto"></div>
+  </div>
 </div>
 
 <script>
-const fmt = n => n.toLocaleString('es-MX');
+const PATH = "./site/data";
+let META=null, HIST=[];
 
-let RAW = [], META=null;
+async function loadAll(){
+  META = await (await fetch(`${PATH}/meta.json`)).json();
+  HIST = await (await fetch(`${PATH}/historical_rows.json`)).json();
 
-// Carga JSON (en GitHub Pages: site/data/…)
-async function loadAll() {
-  const [hist, meta] = await Promise.all([
-    fetch('site/data/historical_rows.json').then(r=>r.json()),
-    fetch('site/data/meta.json').then(r=>r.json()),
-  ]);
-  RAW = hist;
-  META = meta;
+  const fill = (id, arr) => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = `<option value="ALL">ALL</option>` + (arr||[]).map(v=>`<option>${v}</option>`).join("");
+  };
+  fill('agency', META.agencies);
+  fill('destination', META.destinations);
+  fill('cond', META.conds);
 
-  // filtros
-  fillSelect('fAgency', ['ALL', ...META.agencies]);
-  fillSelect('fDest',   ['ALL', ...META.destinations]);
-  fillSelect('fCond',   ['ALL', ...META.conds]);
-  document.getElementById('fMin').value = META.dias_min;
-  document.getElementById('fMax').value = META.dias_max;
-  document.getElementById('fFrom').value = META.range_start;
-  document.getElementById('fTo').value   = META.range_end;
-  document.getElementById('fDay').value  = META.range_end;
-  document.getElementById('rangeText').innerText = `${META.range_start} a ${META.range_end}`;
+  document.getElementById('diasMin').value = META.dias_min ?? 0;
+  document.getElementById('diasMax').value = META.dias_max ?? 0;
 
-  applyFilters();
+  document.getElementById('startDate').value = META.range_start;
+  document.getElementById('endDate').value   = META.range_end;
+  document.getElementById('startDate').min   = META.range_start;
+  document.getElementById('startDate').max   = META.range_end;
+  document.getElementById('endDate').min     = META.range_start;
+  document.getElementById('endDate').max     = META.range_end;
+
+  document.getElementById('detailDate').value = META.range_end;
+  document.getElementById('detailDate').min   = META.range_start;
+  document.getElementById('detailDate').max   = META.range_end;
+
+  document.getElementById('rng').innerText = `${META.range_start} a ${META.range_end}`;
+  renderAll();
 }
 
-function fillSelect(id, arr){
-  const el = document.getElementById(id);
-  el.innerHTML = '';
-  for(const v of arr){
-    const o = document.createElement('option');
-    o.value = v; o.textContent = v;
-    el.appendChild(o);
+function currentFilters(){
+  const ag = document.getElementById('agency').value;
+  const de = document.getElementById('destination').value;
+  const co = document.getElementById('cond').value;
+  const dmin = Number(document.getElementById('diasMin').value);
+  const dmax = Number(document.getElementById('diasMax').value);
+  const sd = document.getElementById('startDate').value;
+  const ed = document.getElementById('endDate').value;
+  const dd = document.getElementById('detailDate').value;
+  return {ag, de, co, dmin, dmax, sd, ed, dd};
+}
+function inRange(v, a, b){ if(v===null || v===undefined || Number.isNaN(v)) return false; return v>=a && v<=b; }
+
+function filterRows(rows){
+  const {ag,de,co,dmin,dmax,sd,ed} = currentFilters();
+  return rows.filter(r=>{
+    const dest = r.destination ?? r.Destination;
+    if(ag!=="ALL" && r.agency!==ag) return false;
+    if(de!=="ALL" && dest!==de) return false;
+    if(co!=="ALL" && r.condactivacion!==co) return false;
+    if(r.fecha < sd || r.fecha > ed) return false;
+    const v = (r.dias_ant_check_in===null) ? null : Number(r.dias_ant_check_in);
+    if(!inRange(v, dmin, dmax)) return false;
+    return true;
+  }).map(r=>({...r, destination: r.destination ?? r.Destination}));
+}
+
+function groupByDate(rows){
+  const map = {};
+  for(const r of rows){
+    const f = r.fecha;
+    map[f] ||= {total:0, with_email:0, valid:0, unique:0, dups:0, reasons:{ok:0, empty:0, invalid_format:0, duplicate:0}};
+    const m = map[f];
+    m.total += 1;
+    if(r.has_email) m.with_email += 1;
+    if(r.has_email && r.valid_format) m.valid += 1;
+    if(r.is_duplicate) m.dups += 1;
+    if(r.has_email && r.valid_format && !r.is_duplicate) m.unique += 1;
+    m.reasons[r.dq_reason] = (m.reasons[r.dq_reason]||0)+1;
   }
-}
-
-function applyFilters(){
-  const ag = document.getElementById('fAgency').value;
-  const ds = document.getElementById('fDest').value;
-  const co = document.getElementById('fCond').value;
-  const minD = Number(document.getElementById('fMin').value);
-  const maxD = Number(document.getElementById('fMax').value);
-  const from = document.getElementById('fFrom').value;
-  const to   = document.getElementById('fTo').value;
-  const day  = document.getElementById('fDay').value;
-
-  const rows = RAW.filter(r=>{
-    const okAg = (ag==='ALL' || (r.agency||'').trim()===ag);
-    const okDs = (ds==='ALL' || (r.destination||'').trim()===ds);
-    const okCo = (co==='ALL' || (r.condactivacion||'').trim()===co);
-    const d = new Date(r.fecha);
-    const okRange = (!from || d>=new Date(from)) && (!to || d<=new Date(to));
-    const di = Number(r.dias_ant_check_in);
-    const okDays = (isNaN(minD) || di>=minD) && (isNaN(maxD) || di<=maxD);
-    return okAg && okDs && okCo && okRange && okDays;
+  const dates = Object.keys(map).sort();
+  return dates.map(d=>{
+    const m = map[d];
+    return {
+      fecha:d,
+      total:m.total,
+      with_email:m.with_email,
+      valid:m.valid,
+      unique:m.unique,
+      dups:m.dups,
+      sendable:m.unique,
+      reasons:m.reasons,
+      pct_with_email: m.total ? Math.round(100*m.with_email/m.total*100)/100 : 0,
+      pct_valid_of_with: m.with_email ? Math.round(100*m.valid/m.with_email*100)/100 : 0,
+      pct_sendable_of_total: m.total ? Math.round(100*m.unique/m.total*100)/100 : 0
+    };
   });
-
-  drawKPIs(rows);
-  drawHistory(rows);
-  drawDayDetail(rows, day);
+}
+function sumReasonsFromGrouped(grouped){
+  const total = {ok:0, empty:0, invalid_format:0, duplicate:0};
+  for(const g of grouped){ for(const k of Object.keys(total)){ total[k] += (g.reasons[k]||0); } }
+  return total;
+}
+function topDomains(rows, predicate, topN=10){
+  const map = {};
+  for(const r of rows){
+    if(predicate && !predicate(r)) continue;
+    const d = (r.email_domain||'(vacío)').toLowerCase();
+    map[d] = (map[d]||0)+1;
+  }
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, topN);
+  const labels = entries.map(e=>e[0]);
+  const counts = entries.map(e=>e[1]);
+  const total = counts.reduce((a,b)=>a+b,0);
+  const perc = counts.map(v=> total ? Math.round(v/total*10000)/100 : 0);
+  return {labels, counts, perc, total};
+}
+function topDuplicatedEmails(rows, topN=15){
+  const map={};
+  for(const r of rows){
+    if(!r.is_duplicate) continue;
+    const k = (r.Email||'').toString().toLowerCase();
+    map[k]=(map[k]||0)+1;
+  }
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, topN);
+  return {emails: entries.map(e=>e[0]), counts: entries.map(e=>e[1])};
 }
 
-function kpiBreakdown(rows){
-  const withEmail = rows.filter(r=>r.has_email);
-  const invalid_format = withEmail.filter(r=>!r.valid_format).length;
-  const empty = rows.length - withEmail.length;
-  const dups  = rows.filter(r=>r.is_duplicate).length;
-  return {invalid_format, empty, dups};
-}
+function drawHistorical(filtered){
+  const grouped = groupByDate(filtered);
+  const x = grouped.map(g=>g.fecha);
+  Plotly.newPlot('hist_line', [
+    {type:'scatter', mode:'lines+markers', x, y: grouped.map(g=>g.total),   name:'Total',     hovertemplate:'%{x}<br>Total: %{y}<extra></extra>'},
+    {type:'scatter', mode:'lines+markers', x, y: grouped.map(g=>g.sendable),name:'Enviables', hovertemplate:'%{x}<br>Enviables: %{y}<extra></extra>'}
+  ], {title:'Histórico: Total vs Enviables', xaxis:{title:'Fecha'}, yaxis:{title:'Registros'}, margin:{t:50}});
 
-function drawKPIs(rows){
-  // totales
-  const total = rows.length;
-  const withEmail = rows.filter(r=>r.has_email).length;
-  const valid = rows.filter(r=>r.has_email && r.valid_format).length;
-
-  // enviables por día (únicos válidos por día)
-  const sendPerDay = {};
-  for(const r of rows){
-    const key = r.fecha;
-    if(!sendPerDay[key]) sendPerDay[key] = new Set();
-    if(r.has_email && r.valid_format && !r.is_duplicate){
-      // clave por email_domain+ts no existe; usamos email_domain a falta de email sin exponer; aquí basta contar en día
-      sendPerDay[key].add((r.email_domain||'') + '|' + (r.Fecha_de_creacion||''));
-    }
-  }
-  const sendableSum = Object.values(sendPerDay).reduce((a,s)=>a+s.size,0);
-
-  // únicos enviables globales (por email_domain + fecha dentro del rango)
-  const globalSet = new Set();
-  for(const r of rows){
-    if(r.has_email && r.valid_format && !r.is_duplicate){
-      globalSet.add(r.email_domain + '|' + r.fecha);
-    }
-  }
-
-  // Pcts
-  const pct_with = total? (100*withEmail/total):0;
-  const pct_valid_of_with = withEmail? (100*valid/withEmail):0;
-  const pct_send_total = total? (100*sendableSum/total):0;
-
-  document.getElementById('k_total').innerText = fmt(total);
-  document.getElementById('k_with').innerText  = fmt(withEmail);
-  document.getElementById('k_with_pct').innerText = pct_with.toFixed(2) + '%';
-  document.getElementById('k_valid').innerText = fmt(valid);
-  document.getElementById('k_valid_pct').innerText = pct_valid_of_with.toFixed(2) + '%';
-  document.getElementById('k_send').innerText  = fmt(sendableSum);
-  document.getElementById('k_send_pct').innerText = pct_send_total.toFixed(2) + '%';
-  document.getElementById('k_global_unique').innerText = fmt(globalSet.size);
-
-  const br = kpiBreakdown(rows);
-  document.getElementById('k_invalid_break').innerText =
-    `No válidos: vacíos ${fmt(br.empty)} · inválidos ${fmt(br.invalid_format)} · duplicados ${fmt(br.dups)}`;
-}
-
-function drawHistory(rows){
-  // Serie diaria
-  const byDay = {};
-  for(const r of rows){
-    if(!byDay[r.fecha]) byDay[r.fecha] = {total:0, send:0, ok:0, empty:0, invalid:0, dup:0};
-    const b = byDay[r.fecha];
-    b.total += 1;
-    if(r.has_email && r.valid_format && !r.is_duplicate) b.send += 1;
-    if(r.dq_reason==='ok') b.ok += 1;
-    if(r.dq_reason==='empty') b.empty += 1;
-    if(r.dq_reason==='invalid_format') b.invalid += 1;
-    if(r.dq_reason==='duplicate') b.dup += 1;
-  }
-  const days = Object.keys(byDay).sort();
-  const total = days.map(d=>byDay[d].total);
-  const send  = days.map(d=>byDay[d].send);
-
-  Plotly.newPlot('c_hist_tvse', [
-    {x:days,y:total,mode:'lines+markers',name:'Total'},
-    {x:days,y:send, mode:'lines+markers',name:'Enviables'}
-  ], {margin:{t:20,r:10,l:40,b:60},paper_bgcolor:'#111827',plot_bgcolor:'#111827',font:{color:'#e5e7eb'}});
-
-  Plotly.newPlot('c_hist_reasons', [
-    {x:days, y:days.map(d=>byDay[d].ok),     stackgroup:'a', name:'ok'},
-    {x:days, y:days.map(d=>byDay[d].empty),  stackgroup:'a', name:'empty'},
-    {x:days, y:days.map(d=>byDay[d].invalid),stackgroup:'a', name:'invalid_format'},
-    {x:days, y:days.map(d=>byDay[d].dup),    stackgroup:'a', name:'duplicate'}
-  ], {margin:{t:20,r:10,l:40,b:60},paper_bgcolor:'#111827',plot_bgcolor:'#111827',font:{color:'#e5e7eb'}});
-
-  // Top dominios enviables (mensual)
-  const dom = {};
-  for(const r of rows){
-    if(r.has_email && r.valid_format && !r.is_duplicate){
-      dom[r.email_domain||''] = (dom[r.email_domain||'']||0)+1;
-    }
-  }
-  const top = Object.entries(dom).sort((a,b)=>b[1]-a[1]).slice(0,15);
-  Plotly.newPlot('c_hist_top_domains', [{
-    x: top.map(t=>t[0]), y: top.map(t=>t[1]), type:'bar'
-  }], {margin:{t:20,r:10,l:40,b:80},paper_bgcolor:'#111827',plot_bgcolor:'#111827',font:{color:'#e5e7eb'}});
-
-  // Resumen diario (tabla)
-  let html = `
-    <thead><tr>
-      <th>Fecha</th><th>Total</th><th>Con email</th><th>Válidos</th>
-      <th>Únicos</th><th>Duplicados</th><th>% con email</th><th>% válidos / con email</th><th>% enviables / total</th>
-    </tr></thead><tbody>`;
-  for(const d of days){
-    const b = byDay[d];
-    const withEmail = b.total - b.empty;
-    const valid = withEmail - b.invalid;
-    const pct_with = b.total? (100*withEmail/b.total):0;
-    const pct_valid_of_with = withEmail? (100*valid/withEmail):0;
-    const pct_send_total = b.total? (100*b.send/b.total):0;
-    html += `<tr>
-      <td>${d}</td><td>${fmt(b.total)}</td><td>${fmt(withEmail)}</td>
-      <td>${fmt(valid)}</td><td>${fmt(b.send)}</td><td>${fmt(b.dup)}</td>
-      <td>${pct_with.toFixed(2)}%</td><td>${pct_valid_of_with.toFixed(2)}%</td><td>${pct_send_total.toFixed(2)}%</td>
-    </tr>`;
-  }
-  html += `</tbody>`;
-  document.getElementById('t_daily').innerHTML = html;
-}
-
-function drawDayDetail(rows, day){
-  document.getElementById('dayChip').innerText = day || '';
-  const sel = rows.filter(r=>r.fecha===day);
-
-  const total = sel.length;
-  const withEmail = sel.filter(r=>r.has_email).length;
-  const valid = sel.filter(r=>r.has_email && r.valid_format).length;
-  const unique = sel.filter(r=>r.has_email && r.valid_format && !r.is_duplicate).length;
-  const pct_with = total? 100*withEmail/total:0;
-  const pct_valid_of_with = withEmail? 100*valid/withEmail:0;
-  const pct_unique_total = total? 100*unique/total:0;
-
-  // Barras (%)
-  Plotly.newPlot('c_day_bars', [{
-    x:['Total (100%)','Con email (% total)','Válidos (% con email)','Únicos (% total)','Enviables (% total)'],
-    y:[100, pct_with, pct_valid_of_with, pct_unique_total, pct_unique_total],
-    type:'bar',
-    hovertemplate:'%{y:.2f}%<extra></extra>'
-  }], {margin:{t:20,r:10,l:40,b:80},paper_bgcolor:'#111827',plot_bgcolor:'#111827',font:{color:'#e5e7eb'}});
-
-  // Pie razones
-  const counts = {ok:0,empty:0,invalid_format:0,duplicate:0};
-  for(const r of sel){ counts[r.dq_reason] = (counts[r.dq_reason]||0)+1; }
-  Plotly.newPlot('c_day_pie', [{
-    labels:['ok','empty','invalid_format','duplicate'],
-    values:[counts.ok||0,counts.empty||0,counts.invalid_format||0,counts.duplicate||0],
-    type:'pie', textinfo:'percent+label'
-  }], {margin:{t:20,r:10,l:10,b:10},paper_bgcolor:'#111827',plot_bgcolor:'#111827',font:{color:'#e5e7eb'}});
-
-  // Top dominios (enviables) % del día
-  const dmap = {};
-  for(const r of sel){
-    if(r.has_email && r.valid_format && !r.is_duplicate){
-      dmap[r.email_domain||''] = (dmap[r.email_domain||'']||0)+1;
-    }
-  }
-  const top = Object.entries(dmap).sort((a,b)=>b[1]-a[1]).slice(0,12);
-  const denom = Math.max(1, unique);
-  Plotly.newPlot('c_day_domains', [{
-    x: top.map(t=>t[0]),
-    y: top.map(t=>100*t[1]/denom),
-    type:'bar',
-    hovertemplate:'%{y:.2f}%<extra></extra>'
-  }], {margin:{t:20,r:10,l:40,b:80},paper_bgcolor:'#111827',plot_bgcolor:'#111827',font:{color:'#e5e7eb'}});
-
-  // Emails duplicados (sin labels fijos; solo hover)
-  const dupMap = {};
-  for(const r of sel){
-    if(r.is_duplicate && r.has_email && r.email_domain){
-      const key = (r.Email || '(desconocido)').toLowerCase();
-      dupMap[key] = (dupMap[key]||0)+1;
-    }
-  }
-  const dupTop = Object.entries(dupMap).sort((a,b)=>b[1]-a[1]).slice(0,15);
-  Plotly.newPlot('c_day_dup_emails', [{
-    y: dupTop.map(t=>t[0]).reverse(),
-    x: dupTop.map(t=>t[1]).reverse(),
-    type:'bar', orientation:'h',
-    hovertemplate:'%{x} duplicados<extra></extra>'
-  }], {margin:{t:20,r:10,l:200,b:40},paper_bgcolor:'#111827',plot_bgcolor:'#111827',font:{color:'#e5e7eb'}});
-
-  // Tabla de duplicados del día
-  const dupRows = sel.filter(r=>r.is_duplicate && r.has_email).map(r=>({
-    Email:(r.Email||'').toLowerCase(),
-    Dominio:r.email_domain||'',
-    Agency:r.agency||'',
-    Destination:r.destination||''
+  const order = ['ok','empty','invalid_format','duplicate'];
+  const traces = order.map(k=>({
+    x, y: grouped.map(g=> (g.reasons[k]||0)), stackgroup:'one', name:k, hovertemplate:`%{x}<br>${k}: %{y}<extra></extra>`
   }));
-  let html = `<thead><tr><th>Email</th><th>Dominio</th><th>Agency</th><th>Destination</th></tr></thead><tbody>`;
-  for(const r of dupRows){
-    html += `<tr><td>${r.Email}</td><td>${r.Dominio}</td><td>${r.Agency}</td><td>${r.Destination}</td></tr>`;
-  }
-  if(!dupRows.length) html += `<tr><td colspan="4" class="muted">Sin duplicados para este día.</td></tr>`;
-  html += `</tbody>`;
-  document.getElementById('t_dups').innerHTML = html;
+  Plotly.newPlot('hist_stack', traces, {title:'Histórico: Razones DQ (stacked)', xaxis:{title:'Fecha'}, yaxis:{title:'Registros'}, margin:{t:50}});
+
+  // KPIs rango
+  const tot   = grouped.reduce((a,b)=>a+b.total,0);
+  const withE = grouped.reduce((a,b)=>a+b.with_email,0);
+  const valid = grouped.reduce((a,b)=>a+b.valid,0);
+  const uniqSumDaily = grouped.reduce((a,b)=>a+b.unique,0);
+
+  // Únicos enviables (globales del rango)
+  const uniqGlobalSendable = new Set(
+    filtered.filter(r => r.has_email && r.valid_format && !r.is_duplicate && r.email_norm && r.email_norm!=='')
+            .map(r => r.email_norm)
+  ).size;
+
+  const rSum = sumReasonsFromGrouped(grouped);
+  const subInvalid = `No válidos: vacíos ${rSum.empty.toLocaleString('es-MX')} · inválidos ${rSum.invalid_format.toLocaleString('es-MX')} · duplicados ${rSum.duplicate.toLocaleString('es-MX')}`;
+
+  renderKPIs('kpis-range', [
+    {num: tot,  lbl:'Registros (rango)'},
+    {num: withE, lbl:`Con email · ${pct(withE,tot)}%`},
+    {num: valid, lbl:`Formato válido · ${pct(valid,withE)}% de con email`, sub: subInvalid},
+    {num: uniqSumDaily,  lbl:`Enviables (suma diaria) · ${pct(uniqSumDaily,tot)}% del total`},
+    {num: uniqGlobalSendable, lbl:'Únicos enviables (rango)'}
+  ]);
+
+  renderDailyTable(grouped);
+
+  // Top dominios duplicados (rango, %)
+  const td = topDomains(filtered, r => r.is_duplicate === true, 12);
+  Plotly.newPlot('hist_top_dups',
+    [{type:'bar', x:td.labels, y:td.perc, text:td.perc.map(v=>v+'%'), textposition:'auto',
+      hovertemplate:'%{x}: %{y}%<br>Duplicados: %{customdata}<extra></extra>',
+      customdata: td.counts}],
+    {title:'Top dominios duplicados (rango, %)', margin:{t:50, b:80}, xaxis:{tickangle:-30}, yaxis:{ticksuffix:'%'}}
+  );
 }
 
-document.getElementById('apply').addEventListener('click', applyFilters);
+function buildDayRows(allFiltered, day){ return allFiltered.filter(r=> r.fecha===day); }
+
+function buildYesterdaySummary(rows){
+  const total = rows.length;
+  const with_email = rows.filter(r=> r.has_email).length;
+  const valid = rows.filter(r=> r.has_email && r.valid_format).length;
+  const unique = rows.filter(r=> r.has_email && r.valid_format && !r.is_duplicate).length;
+  const dups = rows.filter(r=> r.is_duplicate).length;
+  const reasons = {ok:0, empty:0, invalid_format:0, duplicate:0};
+  const topMap = {};
+  for(const r of rows){
+    reasons[r.dq_reason] = (reasons[r.dq_reason]||0)+1;
+    if(r.dq_reason==='ok'){ const k=r.email_domain||'(vacío)'; topMap[k]=(topMap[k]||0)+1; }
+  }
+  const topDomains = Object.entries(topMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  return {total, with_email, valid, unique, dups, sendable: unique, reasons, topDomains};
+}
+
+function drawDay(filtered, day){
+  document.getElementById('detailLabel').innerText = day;
+  const rows = buildDayRows(filtered, day);
+  const s = buildYesterdaySummary(rows);
+
+  renderKPIs('kpis-day', [
+    {num:s.total,  lbl:'Registros'},
+    {num:s.with_email, lbl:`Con email · ${pct(s.with_email,s.total)}%`},
+    {num:s.valid, lbl:`Formato válido · ${pct(s.valid,s.with_email)}% de con email`},
+    {num:s.sendable, lbl:`Enviables · ${pct(s.sendable,s.total)}% del total`}
+  ]);
+
+  // Volumen del día -> PORCENTAJES
+  const pTotal  = 100;
+  const pWith   = pct(s.with_email, s.total);
+  const pValid  = pct(s.valid, s.with_email);
+  const pUnique = pct(s.unique, s.total);
+  const pSend   = pct(s.sendable, s.total);
+  Plotly.newPlot('y_bar', [{
+    type:'bar',
+    x:['Total (100%)','Con email (% total)','Válidos (% con email)','Únicos (% total)','Enviables (% total)'],
+    y:[pTotal, pWith, pValid, pUnique, pSend],
+    text:[pTotal, pWith, pValid, pUnique, pSend].map(v=>v+'%'),
+    textposition:'auto',
+    hovertemplate:'%{x}: %{y}%<extra></extra>'
+  }], {title:'Volumen del día (porcentajes)', margin:{t:50}, yaxis:{ticksuffix:'%'}});
+
+  // Pie razones (día)
+  const order=['ok','empty','invalid_format','duplicate'];
+  Plotly.newPlot('y_pie', [{
+    type:'pie', labels:order, values:order.map(k=> s.reasons[k]||0), textinfo:'label+percent',
+    hovertemplate:'%{label}: %{value}<extra></extra>'
+  }], {title:'Razones DQ del día', margin:{t:50}});
+
+  // Top dominios enviables (%, día)
+  const dl = s.topDomains.map(d=>d[0]);
+  const dv = s.topDomains.map(d=>d[1]);
+  const totalEnv = dv.reduce((a,b)=>a+b,0);
+  const dp = dv.map(v=> totalEnv ? Math.round(v/totalEnv*10000)/100 : 0);
+  Plotly.newPlot('y_domains',
+    [{type:'bar', x:dl, y:dp, text:dp.map(v=>v+'%'), textposition:'auto',
+      hovertemplate:'%{x}: %{y}%<br>Enviables: %{customdata}<extra></extra>',
+      customdata: dv}],
+    {title:'Top dominios (enviables, % del día)', margin:{t:50, b:80}, xaxis:{tickangle:-30}, yaxis:{ticksuffix:'%'}}
+  );
+
+  // Correos duplicados (día) — SIN etiquetas fijas; solo en hover
+  const dup = topDuplicatedEmails(rows, 15);
+  Plotly.newPlot('y_emails_dups',
+    [{
+      type: 'bar',
+      orientation: 'h',
+      y: [...dup.emails].reverse(),
+      x: [...dup.counts].reverse(),
+      hovertemplate: '%{y}: %{x} duplicados<extra></extra>'
+    }],
+    { title: 'Correos duplicados (día)', margin: { t: 50, l: 220 } }
+  );
+
+  // Tabla de duplicados del día (solo columnas pedidas)
+  const dupRows = rows.filter(r => r.is_duplicate);
+  renderDupTableSimple(dupRows, 'y_dups');
+}
+
+// utilidades UI
+function pct(n,d){ return d? (Math.round((n/d)*10000)/100) : 0; }
+function renderKPIs(containerId, items){
+  const el = document.getElementById(containerId);
+  el.innerHTML = items.map(it=>`
+    <div class="card kpi">
+      <div class="num">${it.num.toLocaleString('es-MX')}</div>
+      <div>
+        <div class="lbl">${it.lbl}</div>
+        ${it.sub ? `<div class="sub">${it.sub}</div>` : ``}
+      </div>
+    </div>
+  `).join('');
+}
+function renderDailyTable(rows){
+  const html = `
+    <table>
+      <thead><tr>
+        <th>Fecha</th><th class="right">Total</th><th class="right">Con email</th>
+        <th class="right">Válidos</th><th class="right">Únicos</th><th class="right">Duplicados</th>
+        <th class="right">% con email</th><th class="right">% válidos / con email</th><th class="right">% enviables / total</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r=>`
+          <tr>
+            <td>${r.fecha}</td>
+            <td class="right">${r.total.toLocaleString('es-MX')}</td>
+            <td class="right">${r.with_email.toLocaleString('es-MX')}</td>
+            <td class="right">${r.valid.toLocaleString('es-MX')}</td>
+            <td class="right">${r.unique.toLocaleString('es-MX')}</td>
+            <td class="right">${r.dups.toLocaleString('es-MX')}</td>
+            <td class="right">${r.pct_with_email}%</td>
+            <td class="right">${r.pct_valid_of_with}%</td>
+            <td class="right">${r.pct_sendable_of_total}%</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+  document.getElementById('daily_table').innerHTML = html;
+}
+
+// Tabla duplicados simple (solo columnas pedidas)
+function renderDupTableSimple(rows, containerId){
+  const target = document.getElementById(containerId);
+  if(!rows.length){ target.innerHTML = '<small class="muted">Sin duplicados para este día.</small>'; return; }
+  const html = `
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th><th>Dominio</th><th>Agency</th><th>Destination</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r=>`
+          <tr>
+            <td>${(r.Email||'').toString().toLowerCase()}</td>
+            <td>${(r.email_domain||'').toString().toLowerCase()}</td>
+            <td>${r.agency||''}</td>
+            <td>${r.destination ?? r.Destination ?? ''}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+  target.innerHTML = html;
+}
+
+function renderAll(){
+  const filters = currentFilters();
+  const histFiltered = filterRows(HIST);
+  drawHistorical(histFiltered);
+  drawDay(histFiltered, filters.dd);
+}
+
+document.getElementById('btn').addEventListener('click', renderAll);
 loadAll();
 </script>
 </body>
